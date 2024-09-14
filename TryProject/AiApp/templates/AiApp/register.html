@@ -1,0 +1,142 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            background: url("{% static 'assets/img/ai2.jpg' %}") no-repeat center center fixed;
+            background-size: cover;
+            position: relative;
+        }
+        .dark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: -1;
+        }
+        .form-container {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin-top: 600px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-overlay"></div>
+    <div class="container form-container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Register</h2>
+            </div>
+            <div class="card-body">
+                <form name="register" action="{% url 'register' %}" method="POST" id="registerForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="name">Name:</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="retype_password">Retype Password:</label>
+                        <input type="password" class="form-control" id="retype_password" name="retype_password" required>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col">
+                            <button type="submit" class="btn btn-primary w-100">Register</button>
+                        </div>
+                        <div class="col">
+                            <a href="{% url 'home' %}" class="btn btn-secondary w-100">Back</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.forms['register'].addEventListener('submit', function(event) {
+            event.preventDefault();  
+    
+            const form = document.getElementById('registerForm');
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const retypePassword = document.getElementById('retype_password').value;
+    
+            if (!email.includes('@')) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Invalid Email",
+                    text: "Please enter a valid email address",
+                });
+                return;
+            }
+    
+            if (password.length < 8) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Password too short",
+                    text: "Password must be at least 8 characters long",
+                });
+                return;
+            }
+    
+            if (password !== retypePassword) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Passwords do not match",
+                    text: "Please make sure the passwords match",
+                });
+                return;
+            }
+    
+
+            fetch("{% url 'check_email' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.email_exists) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Email already exists",
+                        text: "Please use a different email address",
+                    });
+                } else {
+                    form.submit();  // Submit the form if email does not exist
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
